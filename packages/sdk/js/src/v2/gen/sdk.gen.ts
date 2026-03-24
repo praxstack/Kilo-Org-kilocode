@@ -63,6 +63,7 @@ import type {
   KilocodeRemoveSkillResponses,
   KiloFimErrors,
   KiloFimResponses,
+  KiloModesResponses,
   KiloNotificationsErrors,
   KiloNotificationsResponses,
   KiloOrganizationSetErrors,
@@ -3190,6 +3191,36 @@ export class Kilo extends HeyApiClient {
     )
     return (options?.client ?? this.client).get<KiloProfileResponses, KiloProfileErrors, ThrowOnError>({
       url: "/kilo/profile",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * Get organization custom modes
+   *
+   * Fetch custom modes defined for the current organization
+   */
+  public modes<ThrowOnError extends boolean = false>(
+    parameters?: {
+      directory?: string
+      workspace?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<KiloModesResponses, unknown, ThrowOnError>({
+      url: "/kilo/modes",
       ...options,
       ...params,
     })

@@ -34,6 +34,12 @@ export {
   promptOrganizationSelection,
 } from "./api/profile.js"
 export { fetchKiloModels } from "./api/models.js"
+export {
+  fetchOrganizationModes,
+  clearModesCache,
+  type OrganizationMode,
+  type OrganizationModeConfig,
+} from "./api/modes.js"
 export { fetchKilocodeNotifications, type KilocodeNotification } from "./api/notifications.js"
 
 // ============================================================================

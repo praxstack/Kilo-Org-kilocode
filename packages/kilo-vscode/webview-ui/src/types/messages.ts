@@ -214,6 +214,7 @@ export interface SlashCommandInfo {
 // Agent/mode info from CLI backend
 export interface AgentInfo {
   name: string
+  displayName?: string
   description?: string
   mode: "subagent" | "primary" | "all"
   native?: boolean

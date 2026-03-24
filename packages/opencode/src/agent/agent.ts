@@ -32,6 +32,7 @@ export namespace Agent {
   export const Info = z
     .object({
       name: z.string(),
+      displayName: z.string().optional(), // kilocode_change - human-readable name for org modes
       description: z.string().optional(),
       mode: z.enum(["subagent", "primary", "all"]),
       native: z.boolean().optional(),
@@ -328,6 +329,11 @@ export namespace Agent {
       item.name = value.name ?? item.name
       item.steps = value.steps ?? item.steps
       item.options = mergeDeep(item.options, value.options ?? {})
+      // kilocode_change  start - populate displayName from org mode options
+      if (item.options?.displayName && typeof item.options.displayName === "string") {
+        item.displayName = item.options.displayName
+      }
+      // kilocode_change end
       item.permission = PermissionNext.merge(item.permission, PermissionNext.fromConfig(value.permission ?? {}))
     }
 
@@ -468,6 +474,10 @@ export namespace Agent {
     const agent = agents[name]
     if (!agent) throw new RemoveError({ name, message: "agent not found" })
     if (agent.native) throw new RemoveError({ name, message: "cannot remove native agent" })
+    // kilocode_change start - prevent removal of organization-managed agents
+    if (agent.options?.source === "organization")
+      throw new RemoveError({ name, message: "cannot remove organization agent — manage it from the cloud dashboard" })
+    // kilocode_change end
 
     const { unlink, readFile, writeFile } = await import("fs/promises")
     let found = false

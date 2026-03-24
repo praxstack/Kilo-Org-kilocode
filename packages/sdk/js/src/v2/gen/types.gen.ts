@@ -1933,6 +1933,7 @@ export type Command = {
 
 export type Agent = {
   name: string
+  displayName?: string
   description?: string
   mode: "subagent" | "primary" | "all"
   native?: boolean
@@ -4564,6 +4565,42 @@ export type KiloOrganizationSetResponses = {
 }
 
 export type KiloOrganizationSetResponse = KiloOrganizationSetResponses[keyof KiloOrganizationSetResponses]
+
+export type KiloModesData = {
+  body?: never
+  path?: never
+  query?: {
+    directory?: string
+    workspace?: string
+  }
+  url: "/kilo/modes"
+}
+
+export type KiloModesResponses = {
+  /**
+   * Organization modes list
+   */
+  200: {
+    modes: Array<{
+      id: string
+      organization_id: string
+      name: string
+      slug: string
+      created_by: string
+      created_at: string
+      updated_at: string
+      config: {
+        roleDefinition?: string
+        whenToUse?: string
+        description?: string
+        customInstructions?: string
+        groups?: Array<unknown>
+      }
+    }>
+  }
+}
+
+export type KiloModesResponse = KiloModesResponses[keyof KiloModesResponses]
 
 export type KiloFimData = {
   body?: {

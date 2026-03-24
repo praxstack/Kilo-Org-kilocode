@@ -41,6 +41,7 @@ import { ConfigPaths } from "./paths"
 import { Filesystem } from "@/util/filesystem"
 
 import { ModesMigrator } from "../kilocode/modes-migrator" // kilocode_change
+import { fetchOrganizationModes } from "@kilocode/kilo-gateway" // kilocode_change
 import { RulesMigrator } from "../kilocode/rules-migrator" // kilocode_change
 import { WorkflowsMigrator } from "../kilocode/workflows-migrator" // kilocode_change
 import { McpMigrator } from "../kilocode/mcp-migrator" // kilocode_change
@@ -171,6 +172,26 @@ export namespace Config {
       }
     } catch (err) {
       log.warn("failed to load kilocode ignore patterns", { error: err })
+    }
+    // kilocode_change end
+
+    // kilocode_change start - Load organization custom modes from Kilo Cloud API
+    // These override legacy Kilocode modes but are overridden by well-known, global, and project config
+    try {
+      const kilo = auth["kilo"]
+      if (kilo?.type === "oauth" && kilo.access && kilo.accountId) {
+        const modes = await fetchOrganizationModes(kilo.access, kilo.accountId)
+        if (modes.length > 0) {
+          const agents = ModesMigrator.convertOrganizationModes(modes)
+          result = mergeConfigConcatArrays(result, { agent: agents })
+          log.debug("loaded organization custom modes", {
+            count: modes.length,
+            modes: modes.map((m) => m.slug),
+          })
+        }
+      }
+    } catch (err) {
+      log.warn("failed to load organization custom modes", { error: err })
     }
     // kilocode_change end
 

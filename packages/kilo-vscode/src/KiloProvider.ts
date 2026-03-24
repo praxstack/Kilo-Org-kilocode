@@ -1406,6 +1406,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
         type: "agentsLoaded",
         agents: visible.map((a) => ({
           name: a.name,
+          displayName: a.displayName,
           description: a.description,
           mode: a.mode,
           native: a.native,
@@ -2135,6 +2136,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       getWorkspaceDirectory: () => this.getWorkspaceDirectory(),
       disposeGlobal: () => this.disposeGlobal(),
       fetchAndSendProviders: () => this.fetchAndSendProviders(),
+      fetchAndSendAgents: () => this.fetchAndSendAgents(),
     }
   }
 
