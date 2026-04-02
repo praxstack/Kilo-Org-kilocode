@@ -1,5 +1,5 @@
 ---
-title: "What's New in Kilo Code"
+title: "What's New in Kilo Code (April 2026)"
 description: "The Kilo Code extension has been rebuilt from the ground up on the Kilo CLI — faster, more flexible, and with access to 500+ models."
 ---
 
