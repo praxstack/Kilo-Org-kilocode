@@ -1057,6 +1057,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
             await this.syncWebviewState("sse-connected")
             await this.flushPendingSessionRefresh("sse-connected")
             await fetchAndSendPendingPermissions(this.permissionCtx)
+            await fetchAndSendPendingQuestions(this.questionCtx)
           } catch (error) {
             console.error("[Kilo New] KiloProvider: ❌ Failed during connected state handling:", error)
             this.postMessage({
