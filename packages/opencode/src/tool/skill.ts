@@ -7,8 +7,6 @@ import { PermissionNext } from "../permission/next"
 import { Ripgrep } from "../file/ripgrep"
 import { iife } from "@/util/iife"
 
-const BUILTIN = Skill.BUILTIN_LOCATION // kilocode_change
-
 export const SkillTool = Tool.define("skill", async (ctx) => {
   const skills = await Skill.all()
 
@@ -39,7 +37,8 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
           "<available_skills>",
           // kilocode_change start - guard pathToFileURL for builtin skills
           ...accessibleSkills.flatMap((skill) => {
-            const loc = skill.location === BUILTIN ? BUILTIN : pathToFileURL(skill.location).href
+            const loc =
+              skill.location === Skill.BUILTIN_LOCATION ? Skill.BUILTIN_LOCATION : pathToFileURL(skill.location).href
             return [
               `  <skill>`,
               `    <name>${skill.name}</name>`,
@@ -81,7 +80,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
       })
 
       // kilocode_change start - built-in skills have no filesystem directory
-      if (skill.location === BUILTIN) {
+      if (skill.location === Skill.BUILTIN_LOCATION) {
         return {
           title: `Loaded skill: ${skill.name}`,
           output: [
@@ -93,7 +92,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
           ].join("\n"),
           metadata: {
             name: skill.name,
-            dir: BUILTIN,
+            dir: Skill.BUILTIN_LOCATION,
           },
         }
       }

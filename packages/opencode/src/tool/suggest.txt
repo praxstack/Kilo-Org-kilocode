@@ -11,3 +11,9 @@ Guidelines:
 - Provide 1-2 actions maximum
 - Make each action prompt self-contained so it can be injected as a synthetic user message
 - If you need a real answer from the user, use the `question` tool instead
+
+When suggesting a code review:
+- Use `/local-review-uncommitted` as the action prompt for uncommitted working-tree changes
+- Use `/local-review` as the action prompt for committed branch-level changes
+- Only suggest review when the user's request appears fully addressed. Do not suggest it after every edit or partial implementation turn.
+- Do not repeat a review suggestion that was already dismissed in this conversation

@@ -1,12 +1,13 @@
 // kilocode_change - new file
+import { Command } from "@/command"
 import { Flag } from "@/flag/flag"
-import { Identifier } from "@/id/id"
-import { Session } from "@/session"
-import { MessageV2 } from "@/session/message-v2"
+import { Log } from "@/util/log"
 import { Suggestion } from "@/suggestion"
 import z from "zod"
 import DESCRIPTION from "./suggest.txt"
 import { Tool } from "./tool"
+
+const log = Log.create({ service: "tool.suggest" })
 
 const Params = z.object({
   suggest: z.string().describe("Short suggestion text shown to the user"),
@@ -18,42 +19,39 @@ type Meta = {
   dismissed: boolean
 }
 
-async function inject(input: { sessionID: string; user: MessageV2.User; agent: string; text: string }) {
-  const msg: MessageV2.User = {
-    id: Identifier.ascending("message"),
-    sessionID: input.sessionID,
-    role: "user",
-    time: {
-      created: Date.now(),
-    },
-    agent: input.agent,
-    model: input.user.model,
-    variant: input.user.variant,
-    editorContext: input.user.editorContext,
+/**
+ * If prompt starts with `/`, treat it as a slash-command reference.
+ * Resolve the command template and return its content so the LLM can
+ * act on it in the current turn — without injecting a synthetic user
+ * message or trying to dispatch a command on the same session (which
+ * would deadlock).
+ */
+async function resolve(prompt: string): Promise<string> {
+  if (!prompt.startsWith("/")) return prompt
+
+  const name = prompt.slice(1).split(/\s/, 1)[0]
+  if (!name) return prompt
+
+  const cmd = await Command.get(name)
+  if (!cmd) {
+    log.warn("unknown command in suggestion action", { name })
+    return prompt
   }
-  await Session.updateMessage(msg)
-  await Session.updatePart({
-    id: Identifier.ascending("part"),
-    messageID: msg.id,
-    sessionID: input.sessionID,
-    type: "text",
-    text: input.text,
-    synthetic: true,
-  } satisfies MessageV2.TextPart)
+
+  try {
+    const template = await cmd.template
+    log.info("resolved command template", { name, length: template.length })
+    return template
+  } catch (err) {
+    log.warn("failed to resolve command template", { name, err })
+    return prompt
+  }
 }
 
 export const SuggestTool = Tool.define<typeof Params, Meta>("suggest", {
   description: DESCRIPTION,
   parameters: Params,
   async execute(params, ctx) {
-    const user = ctx.messages
-      .slice()
-      .reverse()
-      .find((msg) => msg.info.role === "user")?.info
-    if (!user || user.role !== "user") {
-      throw new Error("No user message found for suggestion context")
-    }
-
     const promise = Suggestion.show({
       sessionID: ctx.sessionID,
       text: params.suggest,
@@ -90,12 +88,7 @@ export const SuggestTool = Tool.define<typeof Params, Meta>("suggest", {
       }
     }
 
-    await inject({
-      sessionID: ctx.sessionID,
-      user,
-      agent: ctx.agent,
-      text: action.prompt,
-    })
+    const resolved = await resolve(action.prompt)
 
     const metadata: Meta = {
       accepted: action,
@@ -104,7 +97,7 @@ export const SuggestTool = Tool.define<typeof Params, Meta>("suggest", {
 
     return {
       title: `User accepted: ${action.label}`,
-      output: `User accepted the suggestion "${action.label}". The accepted action prompt is: ${JSON.stringify(action.prompt)}. It has also been injected as a synthetic user message. Continue with that request now.`,
+      output: `User accepted the suggestion "${action.label}". Carry out the following request now:\n\n${resolved}`,
       metadata,
     }
   },
