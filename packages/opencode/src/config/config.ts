@@ -568,8 +568,12 @@ export namespace Config {
     const message = text ? `Config file at ${item} is invalid: ${text}` : `Config file at ${item} is invalid`
     const err = new InvalidError({ path: item, issues }, { cause })
     if (warnings) warnings.push({ path: item, message, detail: text || undefined })
-    const { Session } = await import("@/session")
-    Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+    try {
+      const { Session } = await import("@/session")
+      Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+    } catch (e) {
+      log.warn("could not publish session error", { message, err: e })
+    }
     if (kind === "command") {
       log.error("failed to load command", { command: item, err, message })
       return
@@ -593,8 +597,12 @@ export namespace Config {
           ? err.data.message
           : `Failed to parse command ${item}`
         if (warnings) warnings.push({ path: item, message }) // kilocode_change
-        const { Session } = await import("@/session")
-        Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        try {
+          const { Session } = await import("@/session")
+          Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        } catch (e) {
+          log.warn("could not publish session error", { message, err: e })
+        }
         log.error("failed to load command", { command: item, err })
         return undefined
       })
@@ -646,8 +654,12 @@ export namespace Config {
           ? err.data.message
           : `Failed to parse agent ${item}`
         if (warnings) warnings.push({ path: item, message }) // kilocode_change
-        const { Session } = await import("@/session")
-        Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        try {
+          const { Session } = await import("@/session")
+          Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        } catch (e) {
+          log.warn("could not publish session error", { message, err: e })
+        }
         log.error("failed to load agent", { agent: item, err })
         return undefined
       })
@@ -700,8 +712,12 @@ export namespace Config {
           ? err.data.message
           : `Failed to parse mode ${item}`
         if (warnings) warnings.push({ path: item, message }) // kilocode_change
-        const { Session } = await import("@/session")
-        Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        try {
+          const { Session } = await import("@/session")
+          Bus.publish(Session.Event.Error, { error: new NamedError.Unknown({ message }).toObject() })
+        } catch (e) {
+          log.warn("could not publish session error", { message, err: e })
+        }
         log.error("failed to load mode", { mode: item, err })
         return undefined
       })

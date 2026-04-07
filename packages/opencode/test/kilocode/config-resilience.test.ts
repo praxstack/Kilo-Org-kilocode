@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import path from "path"
-import { Bus } from "../../src/bus"
 import { Config } from "../../src/config/config"
 import { Instance } from "../../src/project/instance"
 import { Filesystem } from "../../src/util/filesystem"
@@ -47,7 +46,7 @@ Valid agent prompt`,
     })
   })
 
-  test("publishes an error for invalid agent markdown configs", async () => {
+  test("reports a warning for invalid agent markdown configs", async () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Filesystem.write(
@@ -63,22 +62,10 @@ Broken agent prompt`,
     await Instance.provide({
       directory: tmp.path,
       fn: async () => {
-        const seen: Array<{ type: string; properties: { error: { name: string; data: { message: string } } } }> = []
-        const unsub = Bus.subscribeAll((event) => {
-          if (event.type === "session.error") seen.push(event)
-        })
-
         await Config.get()
-        unsub()
+        const warns = await Config.warnings()
 
-        expect(
-          seen.some(
-            (item) =>
-              item.properties.error.name === "UnknownError" &&
-              item.properties.error.data.message.includes("skip.md") &&
-              item.properties.error.data.message.includes("mode"),
-          ),
-        ).toBe(true)
+        expect(warns.some((w) => w.path.includes("skip.md") && w.message.includes("mode"))).toBe(true)
       },
     })
   })
@@ -117,7 +104,7 @@ Valid command template`,
     })
   })
 
-  test("publishes an error for invalid command markdown configs", async () => {
+  test("reports a warning for invalid command markdown configs", async () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Filesystem.write(
@@ -133,22 +120,10 @@ Broken command template`,
     await Instance.provide({
       directory: tmp.path,
       fn: async () => {
-        const seen: Array<{ type: string; properties: { error: { name: string; data: { message: string } } } }> = []
-        const unsub = Bus.subscribeAll((event) => {
-          if (event.type === "session.error") seen.push(event)
-        })
-
         await Config.get()
-        unsub()
+        const warns = await Config.warnings()
 
-        expect(
-          seen.some(
-            (item) =>
-              item.properties.error.name === "UnknownError" &&
-              item.properties.error.data.message.includes("skip.md") &&
-              item.properties.error.data.message.includes("subtask"),
-          ),
-        ).toBe(true)
+        expect(warns.some((w) => w.path.includes("skip.md") && w.message.includes("subtask"))).toBe(true)
       },
     })
   })
