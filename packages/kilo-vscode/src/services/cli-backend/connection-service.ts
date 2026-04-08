@@ -92,6 +92,19 @@ export class KiloConnectionService {
   }
 
   /**
+   * Get the shared SDK client, auto-connecting if not yet started.
+   * Uses the first VS Code workspace folder as the working directory.
+   * Throws if no workspace is open or if the connection fails.
+   */
+  async getClientAsync(): Promise<KiloClient> {
+    if (this.client) return this.client
+    const dir = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    if (!dir) throw new Error("No workspace folder open")
+    await this.connect(dir)
+    return this.client!
+  }
+
+  /**
    * Get server info (port). Returns null if not connected.
    */
   getServerInfo(): { port: number } | null {
