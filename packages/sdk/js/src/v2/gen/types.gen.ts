@@ -1780,6 +1780,7 @@ export type GlobalSession = {
     diff?: string
   }
   project: ProjectSummary | null
+  worktreeName?: string
 }
 
 export type McpResource = {
@@ -2866,6 +2867,14 @@ export type ExperimentalSessionListData = {
      */
     directory?: string
     workspace?: string
+    /**
+     * Filter sessions by project ID
+     */
+    projectID?: string
+    /**
+     * Restrict sessions to the current repo worktree family or current directory
+     */
+    worktrees?: boolean
     /**
      * Only return root sessions (no parentID)
      */

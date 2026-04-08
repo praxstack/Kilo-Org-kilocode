@@ -1835,6 +1835,22 @@
           },
           {
             "in": "query",
+            "name": "projectID",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter sessions by project ID"
+          },
+          {
+            "in": "query",
+            "name": "worktrees",
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Restrict sessions to the current repo worktree family or current directory"
+          },
+          {
+            "in": "query",
             "name": "roots",
             "schema": {
               "type": "boolean"
@@ -14253,6 +14269,9 @@
                 "type": "null"
               }
             ]
+          },
+          "worktreeName": {
+            "type": "string"
           }
         },
         "required": ["id", "slug", "projectID", "directory", "title", "version", "time", "project"]

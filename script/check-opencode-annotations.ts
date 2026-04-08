@@ -37,6 +37,11 @@ const base = baseIdx !== -1 ? args[baseIdx + 1] : "origin/main"
 
 function run(cmd: string, args: string[]) {
   const result = spawnSync(cmd, args, { cwd: ROOT, encoding: "utf8" })
+  if (result.status !== 0) {
+    const msg = result.stderr?.trim() || result.stdout?.trim() || "unknown error"
+    console.error(`Command failed: ${cmd} ${args.join(" ")}\n${msg}`)
+    process.exit(1)
+  }
   return result.stdout?.trim() ?? ""
 }
 
