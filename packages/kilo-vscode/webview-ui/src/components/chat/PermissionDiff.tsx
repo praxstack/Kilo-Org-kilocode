@@ -65,8 +65,8 @@ export const PermissionDiff: Component<PermissionDiffProps> = (props) => {
       </div>
       <div data-slot="permission-diff-content">
         <Diff
-          before={{ name: props.filediff.file, contents: props.filediff.before }}
-          after={{ name: props.filediff.file, contents: props.filediff.after }}
+          before={{ name: props.filediff.file, contents: props.filediff.before ?? "" }}
+          after={{ name: props.filediff.file, contents: props.filediff.after ?? "" }}
           diffStyle="unified"
         />
       </div>
