@@ -34,14 +34,36 @@ import { ModelPreview } from "./ModelPreview"
 // Row / group key helpers — single source of truth for key formatting
 // ---------------------------------------------------------------------------
 
-function fuzzyMatch(query: string, target: string): boolean {
-  const q = query.toLowerCase().replace(/\s+/g, "")
-  const t = target.toLowerCase().replace(/\s+/g, "")
-  let qi = 0
-  for (let ti = 0; ti < t.length && qi < q.length; ti++) {
-    if (t[ti] === q[qi]) qi++
+// Word boundary matching ported from legacy word-boundary-fzf.ts.
+// Splits at camelCase transitions and common delimiters so that e.g.
+// "clso" matches "Claude Sonnet" (Cl + So), "gpt-5" splits into ["gpt","5"].
+const WORD_BOUNDARY = /(?=[A-Z])|[[\]_.:\s/\\(){}-]+/
+
+function acronymMatch(text: string, query: string): boolean {
+  const words = text
+    .split(WORD_BOUNDARY)
+    .filter((w) => w.length > 0)
+    .map((w) => w.toLowerCase())
+
+  const attempt = (wi: number, qi: number): boolean => {
+    if (qi === query.length) return true
+    if (wi >= words.length) return false
+    const word = words[wi]!
+    let consumed = 0
+    while (qi + consumed < query.length && consumed < word.length && word[consumed] === query[qi + consumed]) consumed++
+    if (consumed > 0 && attempt(wi + 1, qi + consumed)) return true
+    return attempt(wi + 1, qi)
   }
-  return qi === q.length
+
+  return attempt(0, 0)
+}
+
+function searchMatch(query: string, text: string): boolean {
+  const q = query.toLowerCase().trim()
+  if (!q) return true
+  const parts = q.split(WORD_BOUNDARY).filter((w) => w.length > 0)
+  if (parts.length === 0) return true
+  return parts.every((p) => acronymMatch(text, p))
 }
 
 const CLEAR_KEY = "clear"
@@ -181,7 +203,9 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
     if (!q) {
       return visibleModels()
     }
-    return visibleModels().filter((m) => fuzzyMatch(q, m.name) || fuzzyMatch(q, m.id) || fuzzyMatch(q, m.providerName))
+    return visibleModels().filter(
+      (m) => searchMatch(q, m.name) || searchMatch(q, m.id) || searchMatch(q, m.providerName),
+    )
   })
 
   // Live set of favorited keys — drives star icon visual state (filled vs outline).
