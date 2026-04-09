@@ -166,7 +166,7 @@ export namespace SessionNetwork {
       },
     }
 
-    return new Promise<void>((resolve, reject) => {
+    const promise = new Promise<void>((resolve, reject) => {
       const onAbort = () => {
         if (!s.pending[id]) return
         input.abort.removeEventListener("abort", onAbort)
@@ -199,6 +199,7 @@ export namespace SessionNetwork {
         log.error("restore watch failed", { err, requestID: id })
       })
     })
+    return { id, promise }
   }
 
   export const restore = fn(

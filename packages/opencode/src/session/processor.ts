@@ -426,25 +426,21 @@ export namespace SessionProcessor {
                 })
                 if (offline) {
                   const msg = SessionNetwork.message(e)
-                  const wait = SessionNetwork.ask({
+                  const { id: requestID, promise: wait } = await SessionNetwork.ask({
                     sessionID: input.sessionID,
                     message: msg,
                     abort: input.abort,
                   })
-                  const list = await SessionNetwork.list()
-                  const match = list.findLast((item) => item.sessionID === input.sessionID)
-                  if (match) {
-                    log.warn("session offline", {
-                      sessionID: input.sessionID,
-                      requestID: match.id,
-                      message: match.message,
-                    })
-                    SessionStatus.set(input.sessionID, {
-                      type: "offline",
-                      requestID: match.id,
-                      message: match.message,
-                    })
-                  }
+                  log.warn("session offline", {
+                    sessionID: input.sessionID,
+                    requestID,
+                    message: msg,
+                  })
+                  SessionStatus.set(input.sessionID, {
+                    type: "offline",
+                    requestID,
+                    message: msg,
+                  })
                   let aborted = false
                   await wait.catch((err) => {
                     if (err instanceof SessionNetwork.RejectedError) {
