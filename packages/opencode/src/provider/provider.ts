@@ -48,7 +48,7 @@ import { ProviderTransform } from "./transform"
 import { Installation } from "../installation"
 import { ModelID, ProviderID } from "./schema"
 
-const DEFAULT_CHUNK_TIMEOUT = 120_000
+const DEFAULT_CHUNK_TIMEOUT = 300_000
 
 import { DEFAULT_HEADERS } from "@/kilocode/const" // kilocode_change
 

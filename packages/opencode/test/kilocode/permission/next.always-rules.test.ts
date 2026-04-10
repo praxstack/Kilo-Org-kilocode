@@ -22,7 +22,10 @@ describe("saveAlwaysRules", () => {
           ruleset: [],
         })
 
-        await PermissionNext.saveAlwaysRules({ requestID: PermissionID.make("permission_1"), approvedAlways: ["npm install"] })
+        await PermissionNext.saveAlwaysRules({
+          requestID: PermissionID.make("permission_1"),
+          approvedAlways: ["npm install"],
+        })
         await PermissionNext.reply({ requestID: PermissionID.make("permission_1"), reply: "once" })
         await expect(askPromise).resolves.toBeUndefined()
 
@@ -54,7 +57,10 @@ describe("saveAlwaysRules", () => {
           ruleset: [],
         })
 
-        await PermissionNext.saveAlwaysRules({ requestID: PermissionID.make("permission_2"), deniedAlways: ["rm -rf /"] })
+        await PermissionNext.saveAlwaysRules({
+          requestID: PermissionID.make("permission_2"),
+          deniedAlways: ["rm -rf /"],
+        })
         await PermissionNext.reply({ requestID: PermissionID.make("permission_2"), reply: "once" })
         await expect(askPromise).resolves.toBeUndefined()
 
@@ -78,7 +84,10 @@ describe("saveAlwaysRules", () => {
       directory: tmp.path,
       fn: async () => {
         await expect(
-          PermissionNext.saveAlwaysRules({ requestID: PermissionID.make("permission_nonexistent"), approvedAlways: ["npm install"] }),
+          PermissionNext.saveAlwaysRules({
+            requestID: PermissionID.make("permission_nonexistent"),
+            approvedAlways: ["npm install"],
+          }),
         ).rejects.toBeInstanceOf(NotFoundError)
       },
     })
@@ -151,7 +160,10 @@ describe("saveAlwaysRules", () => {
         })
 
         // "*" is in always — should be accepted even without metadata.rules
-        await PermissionNext.saveAlwaysRules({ requestID: PermissionID.make("permission_nonbash"), approvedAlways: ["*"] })
+        await PermissionNext.saveAlwaysRules({
+          requestID: PermissionID.make("permission_nonbash"),
+          approvedAlways: ["*"],
+        })
         await PermissionNext.reply({ requestID: PermissionID.make("permission_nonbash"), reply: "once" })
         await expect(askPromise).resolves.toBeUndefined()
 
@@ -185,7 +197,10 @@ describe("saveAlwaysRules", () => {
         })
 
         // Approve the broadest hierarchy level
-        await PermissionNext.saveAlwaysRules({ requestID: PermissionID.make("permission_4"), approvedAlways: ["npm *"] })
+        await PermissionNext.saveAlwaysRules({
+          requestID: PermissionID.make("permission_4"),
+          approvedAlways: ["npm *"],
+        })
         await PermissionNext.reply({ requestID: PermissionID.make("permission_4"), reply: "once" })
         await expect(askPromise).resolves.toBeUndefined()
 
@@ -485,7 +500,7 @@ describe("saveAlwaysRules", () => {
 
         // The original request should still be pending (needs explicit reply)
         const pending = await PermissionNext.list()
-        expect(pending.some((p) => p.id === "permission_a4")).toBe(true)
+        expect(pending.some((p) => String(p.id) === "permission_a4")).toBe(true)
 
         await PermissionNext.reply({ requestID: PermissionID.make("permission_a4"), reply: "once" })
         await expect(askA).resolves.toBeUndefined()
@@ -614,7 +629,7 @@ describe("saveAlwaysRules", () => {
 
         // B should still be pending (curl not covered)
         const pending = await PermissionNext.list()
-        expect(pending.some((p) => p.id === "permission_multi_b2")).toBe(true)
+        expect(pending.some((p) => String(p.id) === "permission_multi_b2")).toBe(true)
 
         await PermissionNext.reply({ requestID: PermissionID.make("permission_multi_b2"), reply: "reject" })
         await expect(askB).rejects.toBeInstanceOf(PermissionNext.RejectedError)
