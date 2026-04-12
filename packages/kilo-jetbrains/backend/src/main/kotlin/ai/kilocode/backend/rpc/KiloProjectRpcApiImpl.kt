@@ -1,17 +1,18 @@
 @file:Suppress("UnstableApiUsage")
 
-package ai.kilocode.rpc
+package ai.kilocode.backend.rpc
 
 import ai.kilocode.rpc.dto.ConnectionStateDto
 import ai.kilocode.rpc.dto.HealthDto
 import ai.kilocode.backend.KiloBackendProjectService
+import ai.kilocode.rpc.KiloProjectRpcApi
 import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Backend implementation of [KiloProjectRpcApi].
+ * Backend implementation of [ai.kilocode.rpc.KiloProjectRpcApi].
  *
  * Resolves the project from the [ProjectId] passed by the frontend
  * and delegates to the project-level [KiloBackendProjectService].

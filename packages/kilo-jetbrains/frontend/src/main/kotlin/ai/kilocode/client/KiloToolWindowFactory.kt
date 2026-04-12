@@ -1,5 +1,6 @@
-package ai.kilocode
+package ai.kilocode.client
 
+import ai.kilocode.client.plugin.KiloBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
@@ -21,7 +22,7 @@ import javax.swing.SwingConstants
 
 class KiloToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val svc = project.service<KiloApiService>()
+        val svc = project.service<KiloAppService>()
         val icon = JBLabel(
             IconLoader.getIcon("/icons/kilo-content.svg", KiloToolWindowFactory::class.java),
         ).apply {

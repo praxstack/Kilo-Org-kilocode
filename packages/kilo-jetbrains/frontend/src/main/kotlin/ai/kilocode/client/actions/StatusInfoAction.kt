@@ -1,7 +1,7 @@
-package ai.kilocode.actions
+package ai.kilocode.client.actions
 
-import ai.kilocode.KiloApiService
-import ai.kilocode.KiloBundle
+import ai.kilocode.client.KiloAppService
+import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.dto.ConnectionStatusDto
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -17,7 +17,7 @@ class StatusInfoAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        val svc = e.project?.service<KiloApiService>() ?: return
+        val svc = e.project?.service<KiloAppService>() ?: return
         val status = when (svc.state.value.status) {
             ConnectionStatusDto.CONNECTED -> KiloBundle.message("toolwindow.status.connected.short")
             ConnectionStatusDto.CONNECTING -> KiloBundle.message("toolwindow.status.connecting.short")

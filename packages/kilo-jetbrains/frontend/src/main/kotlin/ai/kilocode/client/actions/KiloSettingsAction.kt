@@ -1,4 +1,4 @@
-package ai.kilocode.actions
+package ai.kilocode.client.actions
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager

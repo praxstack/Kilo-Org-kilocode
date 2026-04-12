@@ -1,7 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
-package ai.kilocode
+package ai.kilocode.client
 
+import ai.kilocode.client.plugin.KiloBundle
 import ai.kilocode.rpc.KiloProjectRpcApi
 import ai.kilocode.rpc.dto.ConnectionStateDto
 import ai.kilocode.rpc.dto.ConnectionStatusDto
@@ -29,12 +30,12 @@ import kotlinx.coroutines.launch
  * correct project-level service without scanning ProjectManager.
  */
 @Service(Service.Level.PROJECT)
-class KiloApiService(
+class KiloAppService(
     private val project: Project,
     private val cs: CoroutineScope,
 ) {
     companion object {
-        private val LOG = Logger.getInstance(KiloApiService::class.java)
+        private val LOG = Logger.getInstance(KiloAppService::class.java)
         private val init = ConnectionStateDto(ConnectionStatusDto.DISCONNECTED)
     }
 

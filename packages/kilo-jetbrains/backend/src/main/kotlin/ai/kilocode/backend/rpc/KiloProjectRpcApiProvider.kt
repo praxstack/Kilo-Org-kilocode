@@ -1,7 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
-package ai.kilocode.rpc
+package ai.kilocode.backend.rpc
 
+import ai.kilocode.rpc.KiloProjectRpcApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 

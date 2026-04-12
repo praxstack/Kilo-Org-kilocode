@@ -1,4 +1,4 @@
-package ai.kilocode
+package ai.kilocode.client.plugin
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.PropertyKey
