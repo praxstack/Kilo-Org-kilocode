@@ -2,6 +2,7 @@ package ai.kilocode.backend.project
 
 import ai.kilocode.backend.app.KiloAppState
 import ai.kilocode.backend.app.KiloBackendAppService
+import ai.kilocode.backend.app.SseEvent
 import ai.kilocode.backend.util.IntellijLog
 import ai.kilocode.backend.util.KiloLog
 import ai.kilocode.jetbrains.api.client.DefaultApi
@@ -15,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -37,6 +39,7 @@ class KiloBackendProjectService private constructor(
     private val cs: CoroutineScope,
     private val appState: () -> StateFlow<KiloAppState>,
     private val api: () -> DefaultApi?,
+    private val events: () -> SharedFlow<SseEvent>,
     private val log: KiloLog,
 ) {
     /** IntelliJ service injection entry point. */
@@ -45,6 +48,7 @@ class KiloBackendProjectService private constructor(
         cs = cs,
         appState = { service<KiloBackendAppService>().appState },
         api = { service<KiloBackendAppService>().api },
+        events = { service<KiloBackendAppService>().events },
         log = IntellijLog(KiloBackendProjectService::class.java),
     )
 
@@ -59,7 +63,8 @@ class KiloBackendProjectService private constructor(
             appState: () -> StateFlow<KiloAppState>,
             api: () -> DefaultApi?,
             log: KiloLog,
-        ) = KiloBackendProjectService(dir, cs, appState, api, log)
+            events: () -> SharedFlow<SseEvent> = { MutableStateFlow(SseEvent("", "")) },
+        ) = KiloBackendProjectService(dir, cs, appState, api, events, log)
     }
 
     private val _state = MutableStateFlow<KiloProjectState>(KiloProjectState.Pending)
@@ -67,6 +72,7 @@ class KiloBackendProjectService private constructor(
 
     private var watcher: Job? = null
     private var loader: Job? = null
+    private var eventWatcher: Job? = null
 
     /**
      * Begin watching app state and loading project data when ready.
@@ -180,6 +186,7 @@ class KiloBackendProjectService private constructor(
                     skills = sk!!,
                 )
                 log.info("Project data loaded for $dir")
+                startWatchingGlobalSseEvents()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -187,6 +194,38 @@ class KiloBackendProjectService private constructor(
                 _state.value = KiloProjectState.Error(
                     "Failed to load: ${synchronized(errors) { errors.joinToString() }}"
                 )
+            }
+        }
+    }
+
+    /**
+     * Watch global SSE events that invalidate project-scoped data.
+     *
+     * - `global.disposed` — the CLI server's global context was torn down.
+     *   All cached providers, agents, commands, and skills are stale — reload.
+     *
+     * - `server.instance.disposed` — a specific server instance was disposed.
+     *   Same effect — reload project data to pick up the new state.
+     *
+     * Idempotent — only one watcher runs at a time.
+     */
+    private fun startWatchingGlobalSseEvents() {
+        if (eventWatcher?.isActive == true) return
+        log.info("Started watching global SSE events for project $directory")
+        eventWatcher = cs.launch {
+            events().collect { event ->
+                when (event.type) {
+                    // CLI server context torn down — all project data is stale
+                    "global.disposed" -> {
+                        log.info("SSE global.disposed — reloading project data for $directory")
+                        load()
+                    }
+                    // Server instance disposed — same effect, reload project data
+                    "server.instance.disposed" -> {
+                        log.info("SSE server.instance.disposed — reloading project data for $directory")
+                        load()
+                    }
+                }
             }
         }
     }

@@ -77,7 +77,7 @@ class KiloBackendAppService private constructor(
     }, log = log)
 
     private var watcher: Job? = null
-    private var router: Job? = null
+    private var eventWatcher: Job? = null
     private var loader: Job? = null
 
     private val _appState = MutableStateFlow<KiloAppState>(KiloAppState.Disconnected)
@@ -85,6 +85,8 @@ class KiloBackendAppService private constructor(
 
     val events: SharedFlow<SseEvent> get() = connection.events
     val api: DefaultApi? get() = connection.api
+
+    val sessions = KiloBackendSessionManager(cs, log)
 
     @Volatile var profile: KiloProfile200Response? = null
         private set
@@ -164,7 +166,7 @@ class KiloBackendAppService private constructor(
     private fun load() {
         loader?.cancel()
         loader = cs.launch {
-            log.info("Loading global data")
+            log.info("Application starting — loading config, profile, notifications")
             val progress = AtomicReference(LoadProgress())
             _appState.value = KiloAppState.Loading(progress.get())
 
@@ -223,12 +225,13 @@ class KiloBackendAppService private constructor(
                         notifications = notifications,
                     )
                 )
-                log.info("Global data loaded — app is Ready")
-                ensureRouter()
+                log.info("Application started — config, profile, notifications loaded")
+                sessions.start(connection.api!!, connection.events)
+                startWatchingGlobalSseEvents()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                log.warn("Global data load failed: ${e.message}")
+                log.warn("Application start failed: ${e.message}")
                 _appState.value = KiloAppState.Error(
                     message = "Failed to load required data",
                     errors = synchronized(errors) { errors.toList() },
@@ -315,22 +318,57 @@ class KiloBackendAppService private constructor(
         return last
     }
 
-    private fun ensureRouter() {
-        if (router?.isActive == true) return
-        router = cs.launch {
+    /**
+     * Watch global SSE events to keep app state in sync with the CLI server.
+     *
+     * - `global.config.updated` — the project config changed on disk or via CLI.
+     *   Re-fetches config and updates [KiloAppState.Ready] data in-place.
+     *
+     * - `global.disposed` — the CLI server's global context was torn down
+     *   (e.g. during a restart). Triggers a full reload to re-populate all data.
+     *
+     * - `server.instance.disposed` — a specific server instance was disposed.
+     *   Same effect as `global.disposed` — triggers a full reload so downstream
+     *   project services pick up the new state.
+     *
+     * Idempotent — only one watcher runs at a time.
+     */
+    private fun startWatchingGlobalSseEvents() {
+        if (eventWatcher?.isActive == true) return
+        log.info("Started watching global SSE events (config.updated, disposed)")
+        eventWatcher = cs.launch {
             connection.events.collect { event ->
                 when (event.type) {
-                    "global.config.updated" -> launch {
-                        val result = fetchConfig()
-                        if (result.value != null) {
-                            config = result.value
-                            val current = _appState.value
-                            if (current is KiloAppState.Ready) {
-                                _appState.value = current.copy(
-                                    data = current.data.copy(config = result.value)
-                                )
+                    // Config changed on disk or via CLI — re-fetch and update in-place
+                    "global.config.updated" -> {
+                        log.info("SSE global.config.updated — reloading config")
+                        launch {
+                            val result = fetchConfig()
+                            if (result.value != null) {
+                                config = result.value
+                                val current = _appState.value
+                                if (current is KiloAppState.Ready) {
+                                    _appState.value = current.copy(
+                                        data = current.data.copy(config = result.value)
+                                    )
+                                }
+                                log.info("Config reloaded successfully")
                             }
                         }
+                    }
+                    // CLI server context torn down — full reload needed.
+                    // Project services watch appState and will reload when
+                    // the app transitions back to Ready.
+                    "global.disposed" -> {
+                        log.info("SSE global.disposed — triggering full application reload")
+                        val current = _appState.value
+                        if (current is KiloAppState.Ready) load()
+                    }
+                    // Server instance disposed — same effect as global.disposed
+                    "server.instance.disposed" -> {
+                        log.info("SSE server.instance.disposed — triggering full application reload")
+                        val current = _appState.value
+                        if (current is KiloAppState.Ready) load()
                     }
                 }
             }
@@ -338,8 +376,9 @@ class KiloBackendAppService private constructor(
     }
 
     private fun clear() {
+        sessions.stop()
         loader?.cancel()
-        router?.cancel()
+        eventWatcher?.cancel()
         profile = null
         config = null
         notifications = emptyList()

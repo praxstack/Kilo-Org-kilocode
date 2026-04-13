@@ -44,6 +44,16 @@ class MockCliServer : AutoCloseable {
     @Volatile var commandsStatus = 200
     @Volatile var skillsStatus = 200
 
+    // Session REST responses
+    @Volatile var sessions = "[]"
+    @Volatile var sessionCreate = """{"id":"ses_test","slug":"test","projectID":"prj_test","directory":"/test","title":"New Session","version":"1.0.0","time":{"created":1000,"updated":1000}}"""
+    @Volatile var sessionStatuses = "{}"
+    @Volatile var sessionsStatus = 200
+    @Volatile var sessionCreateStatus = 200
+    @Volatile var sessionGetStatus = 200
+    @Volatile var sessionDeleteStatus = 200
+    @Volatile var sessionStatusesStatus = 200
+
     private val executor = Executors.newCachedThreadPool { r ->
         Thread(r, "mock-cli-${Thread.currentThread().id}").apply { isDaemon = true }
     }
@@ -138,6 +148,7 @@ class MockCliServer : AutoCloseable {
             val line = input.readLine() ?: return
             val parts = line.split(" ")
             if (parts.size < 2) return
+            val method = parts[0]
             val path = parts[1]
 
             // Read all headers
@@ -147,6 +158,7 @@ class MockCliServer : AutoCloseable {
             }
 
             val output = BufferedWriter(OutputStreamWriter(socket.getOutputStream()))
+            val bare = path.substringBefore("?")
 
             when {
                 path == "/global/health" -> respond(output, 200, health)
@@ -160,10 +172,17 @@ class MockCliServer : AutoCloseable {
                     }
                 }
                 path == "/global/event" -> handleSse(output)
-                path == "/provider" || path.startsWith("/provider?") -> respond(output, providersStatus, providers)
-                path == "/agent" || path.startsWith("/agent?") -> respond(output, agentsStatus, agents)
-                path == "/command" || path.startsWith("/command?") -> respond(output, commandsStatus, commands)
-                path == "/skill" || path.startsWith("/skill?") -> respond(output, skillsStatus, skills)
+                bare == "/provider" -> respond(output, providersStatus, providers)
+                bare == "/agent" -> respond(output, agentsStatus, agents)
+                bare == "/command" -> respond(output, commandsStatus, commands)
+                bare == "/skill" -> respond(output, skillsStatus, skills)
+                bare == "/session/status" -> respond(output, sessionStatusesStatus, sessionStatuses)
+                bare == "/session" && method == "GET" -> respond(output, sessionsStatus, sessions)
+                bare == "/session" && method == "POST" -> respond(output, sessionCreateStatus, sessionCreate)
+                bare.matches(Regex("/session/ses_[^/]+")) && method == "GET" ->
+                    respond(output, sessionGetStatus, sessionCreate)
+                bare.matches(Regex("/session/ses_[^/]+")) && method == "DELETE" ->
+                    respond(output, sessionDeleteStatus, "true")
                 else -> respond(output, 404, """{"error":"Not found"}""")
             }
         } catch (_: SocketException) {
