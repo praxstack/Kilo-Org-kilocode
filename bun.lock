@@ -27,7 +27,7 @@
     },
     "packages/app": {
       "name": "@opencode-ai/app",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "@kilocode/kilo-i18n": "workspace:*",
         "@kilocode/kilo-ui": "workspace:*",
@@ -82,7 +82,7 @@
     },
     "packages/desktop": {
       "name": "@opencode-ai/desktop",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "@opencode-ai/app": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
@@ -115,7 +115,7 @@
     },
     "packages/desktop-electron": {
       "name": "@opencode-ai/desktop-electron",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "@opencode-ai/app": "workspace:*",
         "@opencode-ai/ui": "workspace:*",
@@ -331,7 +331,7 @@
     },
     "packages/opencode": {
       "name": "@kilocode/cli",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "bin": {
         "kilo": "./bin/kilo",
         "kilocode": "./bin/kilo",
@@ -466,7 +466,7 @@
     },
     "packages/plugin": {
       "name": "@kilocode/plugin",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "@kilocode/sdk": "workspace:*",
         "zod": "catalog:",
@@ -490,7 +490,7 @@
     },
     "packages/script": {
       "name": "@opencode-ai/script",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "semver": "^7.6.3",
       },
@@ -501,7 +501,7 @@
     },
     "packages/sdk/js": {
       "name": "@kilocode/sdk",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "devDependencies": {
         "@hey-api/openapi-ts": "0.90.10",
         "@tsconfig/node22": "catalog:",
@@ -512,7 +512,7 @@
     },
     "packages/storybook": {
       "name": "@opencode-ai/storybook",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "devDependencies": {
         "@opencode-ai/ui": "workspace:*",
         "@solidjs/meta": "catalog:",
@@ -535,7 +535,7 @@
     },
     "packages/ui": {
       "name": "@opencode-ai/ui",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "@kilocode/sdk": "workspace:*",
         "@kobalte/core": "catalog:",
@@ -583,7 +583,7 @@
     },
     "packages/util": {
       "name": "@opencode-ai/util",
-      "version": "1.0.14",
+      "version": "7.2.4",
       "dependencies": {
         "zod": "catalog:",
       },
