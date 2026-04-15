@@ -1,6 +1,7 @@
 import { RemoteProtocol } from "@/kilo-sessions/remote-protocol"
 import type { RemoteWS } from "@/kilo-sessions/remote-ws"
 import { GlobalBus } from "@/bus/global"
+import { AppRuntime } from "@/effect/app-runtime"
 import { Instance } from "@/project/instance"
 import { Session } from "@/session"
 import { SessionPrompt } from "@/session/prompt"
@@ -118,7 +119,10 @@ export namespace RemoteSender {
     // sees state that was asked before it connected — analogous to the Cloud
     // Agent's `connected` event carrying pending question/permission fields.
     async function replay(sessionId: string) {
-      const [questions, permissions] = await Promise.all([Question.list(), Permission.list()])
+      const [questions, permissions] = await Promise.all([
+        Question.list(),
+        AppRuntime.runPromise(Permission.Service.use((svc) => svc.list())),
+      ])
       for (const q of questions) {
         if (q.sessionID !== sessionId) continue
         options.conn.send({
@@ -301,7 +305,11 @@ export namespace RemoteSender {
         }
         const dir = msg.sessionId ? directoryFor(msg.sessionId) : Promise.resolve(options.directory)
         dispatchQuick(msg, dir, () =>
-          Permission.reply({ ...parsed.data, requestID: PermissionID.make(parsed.data.requestID) }),
+          AppRuntime.runPromise(
+            Permission.Service.use((svc) =>
+              svc.reply({ ...parsed.data, requestID: PermissionID.make(parsed.data.requestID) }),
+            ),
+          ),
         )
         return
       }

@@ -2,11 +2,15 @@ import { Hono } from "hono"
 import { describeRoute, resolver, validator } from "hono-openapi"
 import z from "zod"
 import { Config } from "@/config/config"
+import { AppRuntime } from "@/effect/app-runtime"
 import { Permission } from "@/permission"
 import { Session } from "@/session"
 import { SessionID } from "@/session/schema" // kilocode_change
 import { errors } from "../../server/error"
 import { lazy } from "../../util/lazy"
+
+const allowEverything = (input: z.infer<typeof Permission.AllowEverythingInput>) =>
+  AppRuntime.runPromise(Permission.Service.use((svc) => svc.allowEverything(input)))
 
 export const PermissionKilocodeRoutes = lazy(() =>
   new Hono().post(
@@ -48,12 +52,12 @@ export const PermissionKilocodeRoutes = lazy(() =>
               (rule) => !(rule.permission === "*" && rule.pattern === "*" && rule.action === "allow"),
             ),
           })
-          await Permission.allowEverything({ enable: false, sessionID: SessionID.make(body.sessionID) })
+          await allowEverything({ enable: false, sessionID: SessionID.make(body.sessionID) })
           return c.json(true)
         }
 
         await Config.updateGlobal({ permission: { "*": { "*": null } } }, { dispose: false })
-        await Permission.allowEverything({ enable: false })
+        await allowEverything({ enable: false })
         return c.json(true)
       }
 
@@ -67,7 +71,7 @@ export const PermissionKilocodeRoutes = lazy(() =>
         await Config.updateGlobal({ permission: Permission.toConfig(rules) }, { dispose: false })
       }
 
-      await Permission.allowEverything({
+      await allowEverything({
         enable: true,
         requestID: body.requestID,
         sessionID: body.sessionID ? SessionID.make(body.sessionID) : undefined,

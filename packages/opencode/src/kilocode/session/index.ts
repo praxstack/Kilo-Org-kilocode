@@ -146,6 +146,13 @@ export namespace KiloSession {
     await KiloSessions.remove(id).catch(() => {})
   }
 
+  export async function cleanup(id: string): Promise<void> {
+    await removeSession(id)
+    clearPlatformOverride(id)
+    const [app, state] = await Promise.all([import("@/effect/app-runtime"), import("@/session/run-state")])
+    await app.AppRuntime.runPromise(state.SessionRunState.Service.use((svc) => svc.cancel(id)))
+  }
+
   // ---------------------------------------------------------------------------
   // FK-safe SyncEvent wrappers
   //

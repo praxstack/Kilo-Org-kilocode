@@ -9,7 +9,6 @@ export type ProviderID = typeof providerIdSchema.Type
 
 export const ProviderID = providerIdSchema.pipe(
   withStatics((schema: typeof providerIdSchema) => ({
-    make: (id: string) => schema.makeUnsafe(id),
     zod: z.string().pipe(z.custom<ProviderID>()),
     // Well-known providers
     kilo: schema.makeUnsafe("kilo"), // kilocode_change
@@ -33,7 +32,6 @@ export type ModelID = typeof modelIdSchema.Type
 
 export const ModelID = modelIdSchema.pipe(
   withStatics((schema: typeof modelIdSchema) => ({
-    make: (id: string) => schema.makeUnsafe(id),
     zod: z.string().pipe(z.custom<ModelID>()),
   })),
 )

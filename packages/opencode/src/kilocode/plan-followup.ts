@@ -14,9 +14,17 @@ import { SessionID, MessageID, PartID } from "@/session/schema"
 import { LLM } from "@/session/llm"
 import { MessageV2 } from "@/session/message-v2"
 import { Todo } from "@/session/todo"
+import { makeRuntime } from "@/effect/run-service"
 import { Log } from "@/util/log"
 import path from "path"
 import z from "zod"
+
+const agents = makeRuntime(Agent.Service, Agent.defaultLayer)
+const todo = makeRuntime(Todo.Service, Todo.defaultLayer)
+
+async function agent(name: string) {
+  return agents.runPromise((svc) => svc.get(name))
+}
 
 function toText(item: MessageV2.WithParts): string {
   return item.parts
@@ -65,9 +73,9 @@ export async function generateHandover(input: {
 }): Promise<string> {
   const log = Log.create({ service: "plan.followup" })
   try {
-    const agent = await Agent.get("compaction")
-    const model = agent?.model
-      ? await Provider.getModel(agent.model.providerID, agent.model.modelID)
+    const entry = await agent("compaction")
+    const model = entry?.model
+      ? await Provider.getModel(entry.model.providerID, entry.model.modelID)
       : await Provider.getModel(input.model.providerID, input.model.modelID)
 
     const sessionID = SessionID.make(Identifier.ascending("session"))
@@ -81,7 +89,7 @@ export async function generateHandover(input: {
     }
 
     const stream = await LLM.stream({
-      agent: agent ?? {
+      agent: entry ?? {
         name: "compaction",
         mode: "subagent",
         permission: [],
@@ -151,12 +159,12 @@ export namespace PlanFollowup {
       }
     }
 
-    const agent = await Agent.get("code")
-    if (agent?.model) {
-      const full = await Provider.getModel(agent.model.providerID, agent.model.modelID).catch(() => undefined)
+    const entry = await agent("code")
+    if (entry?.model) {
+      const full = await Provider.getModel(entry.model.providerID, entry.model.modelID).catch(() => undefined)
       if (full) {
         return {
-          model: { ...agent.model, variant: resolveVariant(agent.variant, full) },
+          model: { ...entry.model, variant: resolveVariant(entry.variant, full) },
         }
       }
     }
@@ -269,7 +277,7 @@ export namespace PlanFollowup {
     const session = await Session.get(input.sessionID)
     const [handover, todos] = await Promise.all([
       generateHandover({ messages: input.messages, model: input.model, abort: input.abort }),
-      Todo.get(input.sessionID),
+      todo.runPromise((svc) => svc.get(input.sessionID)),
     ])
 
     await Instance.provide({
@@ -299,7 +307,7 @@ export namespace PlanFollowup {
           synthetic: false,
         })
         if (todos.length) {
-          await Todo.update({ sessionID: next.id, todos })
+          await todo.runPromise((svc) => svc.update({ sessionID: next.id, todos }))
         }
         await Bus.publish(TuiEvent.SessionSelect, { sessionID: next.id })
         void import("@/session/prompt")
