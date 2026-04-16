@@ -200,7 +200,7 @@ export class WorktreeDiffController {
       if (this.session !== sessionId) return
       this.interval = setInterval(() => {
         void this.poll(sessionId)
-      }, 2500)
+      }, 15_000)
     })
   }
 

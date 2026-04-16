@@ -69,7 +69,7 @@ export class GitStatsPoller {
   private visible = true
 
   constructor(private readonly options: GitStatsPollerOptions) {
-    this.intervalMs = options.intervalMs ?? 5000
+    this.intervalMs = options.intervalMs ?? 15_000
     this.hiddenIntervalMs = options.hiddenIntervalMs ?? 60000
     this.git = options.git
   }

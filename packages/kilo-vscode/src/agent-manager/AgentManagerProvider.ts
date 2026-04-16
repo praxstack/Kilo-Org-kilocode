@@ -803,6 +803,15 @@ export class AgentManagerProvider implements Disposable {
     }
     for (const s of orphaned) this.panel?.sessions.clearSessionDirectory(s.id)
     this.pushState()
+    // Dispose the CLI Instance (file watchers, LSP, snapshot repo, PubSub)
+    // before removing the directory so the server can clean up properly.
+    try {
+      const client = this.connectionService.getClient()
+      await client.instance.dispose({ directory: worktree.path })
+      this.log(`Disposed CLI instance for worktree ${worktreeId}`)
+    } catch (err) {
+      this.log(`instance.dispose() for worktree ${worktreeId} failed (non-fatal):`, err)
+    }
     // Disk removal after state is clean — pollers no longer reference this worktree.
     try {
       await manager.removeWorktree(worktree.path, worktree.originalBranch ?? worktree.branch)
@@ -835,6 +844,15 @@ export class AgentManagerProvider implements Disposable {
     }
     for (const session of orphaned) {
       this.panel?.sessions.clearSessionDirectory(session.id)
+    }
+    // Dispose the CLI Instance even though the directory may be gone — the
+    // server cache entry still holds resources (PubSub queues, DB connections).
+    try {
+      const client = this.connectionService.getClient()
+      await client.instance.dispose({ directory: worktree.path })
+      this.log(`Disposed CLI instance for stale worktree ${worktreeId}`)
+    } catch (err) {
+      this.log(`instance.dispose() for stale worktree ${worktreeId} failed (non-fatal):`, err)
     }
     this.clearStaleTracking(worktreeId)
     this.pushState()
