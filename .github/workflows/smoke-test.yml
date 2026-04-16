@@ -7,7 +7,7 @@
 #
 # Triggers:
 #   - workflow_dispatch: manually from Actions tab (optionally pass a CLI version)
-#   - push to main: automatically after every merge
+#   - workflow_call: from publish.yml after draft release assets are uploaded
 #
 # Required secrets:
 #   KILO_API_KEY         — Kilo Gateway key
@@ -21,6 +21,12 @@ on:
     inputs:
       cli_version:
         description: "CLI version to test (e.g. 7.0.36). Leave blank for latest npm release."
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      cli_version:
+        description: "CLI version to test from draft release assets."
         required: false
         type: string
 
